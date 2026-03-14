@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db" 
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  productCode String   @unique
+  name_tr     String
+  name_en     String
+  name_ar     String
+  priceUSD    Float
+  priceTRY    Float    @default(0) 
+  stockStatus Int      @default(1)
+  imageUrl    String?
+  sizes       String   @default("Seri 1") 
+  colors      String   @default("#000000") 
+  category    String   @default("Genel")    
+  productType String   @default("Giyim")    
+  brand       String   @default("MUTΛ")     
+  createdAt   DateTime @default(now())
+
+  // 🚀 YENİ: Bu ürünün bulunduğu sipariş detayları
+  orderItems  OrderItem[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  phone     String   @unique
+  otpCode   String?
+  role      String   @default("CUSTOMER")
+  createdAt DateTime @default(now())
+
+  // 🚀 YENİ: Bu müşterinin verdiği siparişler
+  orders    Order[]
+}
+
+// 📦 YENİ TABLO: SİPARİŞ ANA BİLGİLERİ
+model Order {
+  id          Int         @id @default(autoincrement())
+  orderCode   String      @unique // Örn: SIP-1001
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  totalPrice  Float       // Toplam sepet tutarı
+  currency    String      @default("TRY") // TRY veya USD
+  status      String      @default("BEKLIYOR") // BEKLIYOR, ONAYLANDI, IPTAL
+  createdAt   DateTime    @default(now())
+  
+  items       OrderItem[]
+}
+
+// 🛍️ YENİ TABLO: SİPARİŞİN İÇİNDEKİ ÜRÜNLER
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   Int
+  
+  // 👑 ÇÖZÜM BURADA: Ürün silindiğinde bu satırın da silinmesine izin verdik
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  size        String   // Seçilen seri (Örn: "2")
+  color       String   // Seçilen renk (Örn: "#000000")
+  quantity    Int      // Toplam adet (Örn: Seri 2 ise 10 adet)
+  unitPrice   Float    // Satın alındığı andaki fiyat (Sonradan ürün zamlansa bile fiş bozulmasın diye)
+}
