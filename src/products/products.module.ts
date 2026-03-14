@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
-import { CloudinaryModule } from '../cloudinary/cloudinary.module'; // 👈 1. Bulut modülünü içeri alıyoruz
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { PrismaModule } from '../prisma/prisma.module'; // Prisma bağlantısı için eklendi
 
 @Module({
   imports: [
-    CloudinaryModule, // 👈 2. Buraya ekleyerek Controller'ın bu servisi kullanmasına izin veriyoruz
+    CloudinaryModule, // Resim yükleme yeteneği kazandırır
+    PrismaModule,     // Veritabanı (Neon) işlemlerini yapabilmesini sağlar
   ],
   controllers: [ProductsController],
-  providers: [ProductsService], // Not: PrismaService genelde PrismaModule içinden gelir, burada tekrar yazmaya gerek kalmaz
+  providers: [ProductsService],
 })
 export class ProductsModule {}
