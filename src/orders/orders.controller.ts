@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Res } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Res, Delete } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import type { Response } from 'express'; 
 
@@ -22,6 +22,12 @@ export class OrdersController {
   @Post(':orderCode/status')
   async updateOrderStatus(@Param('orderCode') orderCode: string, @Body('status') status: string) {
     return this.ordersService.updateOrderStatus(orderCode, status);
+  }
+
+  // 🗑️ YENİ: Adminin siparişi kalıcı olarak silmesi için kapı
+  @Delete(':orderId')
+  async deleteOrder(@Param('orderId') orderId: string) {
+    return this.ordersService.deleteOrder(Number(orderId));
   }
 
   // 2. WhatsApp'taki Linke Tıklanınca Açılacak Olan GÖRSEL WEB SAYFASI

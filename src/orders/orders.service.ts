@@ -74,4 +74,25 @@ export class OrdersService {
       data: { status }
     });
   }
+
+  // 🗑️ 👑 YENİ EKLENDİ: ADMİN İÇİN SİPARİŞİ KALICI OLARAK SİL
+  async deleteOrder(orderId: number) {
+    try {
+      // 1. Önce bu siparişe ait ürünleri (sepet detaylarını) siliyoruz
+      // Not: Prisma şemanda model adı "OrderItem" ise bu kod sorunsuz çalışır.
+      await this.prisma.orderItem.deleteMany({
+        where: { orderId: orderId },
+      });
+
+      // 2. Alt ürünler temizlendikten sonra ana siparişi siliyoruz
+      const deletedOrder = await this.prisma.order.delete({
+        where: { id: orderId },
+      });
+
+      return { message: 'Sipariş ve detayları başarıyla silindi', deletedOrder };
+    } catch (error) {
+      console.error('Sipariş silinirken hata:', error);
+      throw new NotFoundException('Sipariş silinemedi veya sistemde bulunamadı.');
+    }
+  }
 }
