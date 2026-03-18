@@ -6,68 +6,61 @@ import type { Response } from 'express';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  // 1. Mobil Uygulamadan Gelen Siparişi Kaydet
-  @Post()
+  @Post() 
   async createOrder(@Body() body: any) {
     return this.ordersService.createOrder(body);
   }
-
-  // 👑 YENİ: Adminin tüm siparişleri çekmesi için kapı
+ 
   @Get()
   async getAllOrders() {
     return this.ordersService.getAllOrders();
   }
-
-  // 👑 YENİ: Siparişi Onaylamak / İptal Etmek için kapı
+ 
   @Post(':orderCode/status')
   async updateOrderStatus(@Param('orderCode') orderCode: string, @Body('status') status: string) {
     return this.ordersService.updateOrderStatus(orderCode, status);
   }
-
-  // 🗑️ YENİ: Adminin siparişi kalıcı olarak silmesi için kapı
+ 
   @Delete(':orderId')
   async deleteOrder(@Param('orderId') orderId: string) {
     return this.ordersService.deleteOrder(Number(orderId));
   }
-
-  // 2. WhatsApp'taki Linke Tıklanınca Açılacak Olan GÖRSEL WEB SAYFASI
+ 
   @Get('view/:orderCode')
   async viewOrder(@Param('orderCode') orderCode: string, @Res() res: Response) {
     try {
       const order = await this.ordersService.getOrderWithDetails(orderCode);
-      const BACKEND_URL = 'http://10.102.143.129:3000'; // Resimlerin yüklenmesi için IP adresin
+      const BACKEND_URL = 'http://10.102.143.129:3000'; 
 
-      // Siparişteki her ürün için HTML şablonu oluşturuyoruz
-      let itemsHtml = '';
-      order.items.forEach((item) => {
+      let itemsHtml = ''; 
+      
+      order.items.forEach((item: any) => {
         
-        // 🛠️ FOTOĞRAF DÜZELTME OPERASYONU (KIRILMAZ LİNK ALGORİTMASI)
-        let imgUrl = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'; // Varsayılan görsel
-        let dbPath = item.product.imageUrl;
+        let imgUrl = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'; 
+        
+        // 👑 ÇÖZÜM BURADA: TypeScript'e bunun bir metin (string) veya null olabileceğini açıkça belirttik.
+        let dbPath: string | null = null;
+
+        if (item.product && item.product.colors) {
+          const matchedColor = item.product.colors.find((c: any) => c.colorName === item.color);
+          if (matchedColor && matchedColor.image1) {
+            // 👑 GARANTİ: Gelen veriyi zorla String'e çeviriyoruz ki TypeScript rahat etsin.
+            dbPath = String(matchedColor.image1);
+          }
+        }
 
         if (dbPath) {
-          // 1. Windows ters slash (\) işaretlerini normal slash (/) yap
-          dbPath = dbPath.replace(/\\/g, '/');
-
-          if (dbPath.startsWith('http')) {
-            imgUrl = dbPath; // Zaten tam linkse dokunma
+          if (dbPath.startsWith('http')) { 
+            imgUrl = dbPath;
           } else {
-            // 2. İçinde 'uploads' kelimesi geçmiyorsa zorla ekle
-            if (!dbPath.includes('uploads')) {
-              dbPath = `uploads/${dbPath}`;
-            }
-            // 3. Başında '/' yoksa zorla ekle
-            if (!dbPath.startsWith('/')) {
-              dbPath = `/${dbPath}`;
-            }
-            
-            // 🚀 İŞTE HAYAT KURTARAN O SATIR (BOŞLUK VE TÜRKÇE HARF ÇÖZÜCÜ)
+            dbPath = dbPath.replace(/\\/g, '/');
+            if (!dbPath.includes('uploads')) dbPath = `uploads/${dbPath}`;
+            if (!dbPath.startsWith('/')) dbPath = `/${dbPath}`;
             const rawUrl = `${BACKEND_URL}${dbPath}`;
             imgUrl = encodeURI(rawUrl); 
           }
         }
-
-        // 🖼️ ÜRÜN KARTI TASARIMI
+ 
         itemsHtml += `
           <div style="display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 15px 0;">
             <div style="flex-shrink: 0; width: 80px; height: 110px; margin-right: 15px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #f9f9f9;">
@@ -85,8 +78,7 @@ export class OrdersController {
           </div>
         `;
       });
-
-      // Ana Web Sayfası Tasarımı (Kurumsal Fatura Görünümü)
+ 
       const html = `
         <!DOCTYPE html>
         <html lang="tr">
@@ -139,8 +131,7 @@ export class OrdersController {
     }
   }
 
-  // 🚀 YENİ: Mobil uygulamadan kullanıcının geçmiş siparişlerini çekmek için kapı
-  @Get('user/:userId')
+  @Get('user/:userId') 
   async getUserOrders(@Param('userId') userId: string) {
     return this.ordersService.getUserOrders(Number(userId));
   }

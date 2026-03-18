@@ -33,10 +33,14 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({
       where: { orderCode },
       include: {
-        user: true, // Müşteri numarası için
+        user: true, 
         items: {
           include: {
-            product: true, // Ürünün fotoğrafı ve adı için
+            product: {
+              include: {
+                colors: true // 🎨 YENİ: Faturada doğru resmin çıkması için renkleri ve resimleri de çekiyoruz!
+              }
+            }, 
           },
         },
       },
@@ -50,10 +54,14 @@ export class OrdersService {
   async getUserOrders(userId: number) {
     return this.prisma.order.findMany({
       where: { userId: userId },
-      orderBy: { createdAt: 'desc' }, // En yeniler (son siparişler) en üstte görünsün
+      orderBy: { createdAt: 'desc' }, 
       include: {
         items: {
-          include: { product: true } // Fişte fotoğraf ve isimleri göstermek için ürün detaylarını da çekiyoruz
+          include: { 
+            product: {
+              include: { colors: true } // 🎨 YENİ: Mobildeki sipariş geçmişinde resimlerin çıkması için!
+            } 
+          } 
         }
       }
     });
@@ -79,7 +87,6 @@ export class OrdersService {
   async deleteOrder(orderId: number) {
     try {
       // 1. Önce bu siparişe ait ürünleri (sepet detaylarını) siliyoruz
-      // Not: Prisma şemanda model adı "OrderItem" ise bu kod sorunsuz çalışır.
       await this.prisma.orderItem.deleteMany({
         where: { orderId: orderId },
       });
