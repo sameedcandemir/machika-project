@@ -13,7 +13,7 @@ export class ProductsService {
       return await this.prisma.product.findMany({
         orderBy: { createdAt: 'desc' },
         include: { 
-          colors: true // 🎨 YENİ: Artık ürünler listelenirken renkleri ve Cloudinary resim URL'leri de gelecek!
+          colors: true 
         }
       });
     } catch (error: any) {
@@ -22,7 +22,7 @@ export class ProductsService {
     }
   }
 
-  // 2. YENİ ÜRÜN OLUŞTUR (Varyasyonlu Yapı)
+  // 2. YENİ ÜRÜN OLUŞTUR (İndirim Yüzdesi Eklendi)
   async create(data: any) {
     try {
       console.log(`📦 MUTA SİSTEMİ: Ürün kaydı başlatıldı -> ${data.productCode}`);
@@ -36,20 +36,23 @@ export class ProductsService {
           priceUSD: Number(data.priceUSD), 
           priceTRY: Number(data.priceTRY || 0), 
           stockStatus: data.stockStatus !== undefined ? Number(data.stockStatus) : 1,
+          
+          // 🚀 YENİ: Mobilden gelen indirim veritabanına işleniyor
+          discountPercentage: data.discountPercentage ? Number(data.discountPercentage) : 0,
+
           sizes: data.sizes || 'Seri 1',
           category: data.category || 'Genel',
           productType: data.productType || 'Giyim',
           brand: data.brand || 'MUTΛ',
           
-          // 🎨 YENİ SİHİR BURADA: Ürün oluşturulurken, ona bağlı renkler de aynı anda ProductColor tablosuna yazılıyor.
           colors: {
-            create: data.colorsData // Controller'dan gelen dizi (Array) buraya dökülüyor.
+            create: data.colorsData 
           }
         },
         include: { colors: true }
       });
 
-      console.log(`✅ MUTA SİSTEMİ: Ürün ve ${data.colorsData.length} farklı renk başarıyla kaydedildi (ID: ${newProduct.id})`);
+      console.log(`✅ MUTA SİSTEMİ: Ürün ve ${data.colorsData?.length || 0} farklı renk başarıyla kaydedildi (ID: ${newProduct.id})`);
       return newProduct;
 
     } catch (error: any) {
@@ -58,14 +61,48 @@ export class ProductsService {
     }
   }
 
-  // 3. ADMIN: ÜRÜNÜ SİL
+  // 🚀 YENİ: 3. MEVCUT ÜRÜNÜ GÜNCELLE (Düzenleme Modu)
+  async updateProduct(id: number, data: any) {
+    try {
+      console.log(`📦 MUTA SİSTEMİ: Ürün güncelleme başlatıldı -> ID: ${id}`);
+
+      const updatedProduct = await this.prisma.product.update({
+        where: { id: id },
+        data: {
+          productCode: data.productCode,
+          name_tr: data.name_tr,
+          name_en: data.name_en,
+          name_ar: data.name_ar,
+          priceUSD: data.priceUSD ? Number(data.priceUSD) : undefined, 
+          priceTRY: data.priceTRY ? Number(data.priceTRY) : undefined,
+          
+          // 🚀 YENİ: İndirim Yüzdesi güncelleniyor
+          discountPercentage: data.discountPercentage !== undefined ? Number(data.discountPercentage) : undefined,
+
+          sizes: data.sizes,
+          category: data.category,
+          productType: data.productType,
+          brand: data.brand,
+        },
+        include: { colors: true }
+      });
+
+      console.log(`✅ MUTA SİSTEMİ: Ürün başarıyla güncellendi (ID: ${id})`);
+      return updatedProduct;
+
+    } catch (error: any) {
+      console.error('❌ MUTA VERİTABANI HATASI (Güncelleme):', error.message);
+      throw error;
+    }
+  }
+
+  // 4. ADMIN: ÜRÜNÜ SİL
   async deleteProduct(id: number) {
     try {
       await this.prisma.orderItem.deleteMany({
         where: { productId: id },
       });
 
-      // Product silindiğinde, ProductColor tablosundaki o ürüne ait renkler de Prisma "Cascade" sayesinde otomatik silinecek!
       const deletedProduct = await this.prisma.product.delete({
         where: { id: id },
       });
@@ -77,7 +114,7 @@ export class ProductsService {
     }
   }
 
-  // 4. ADMIN: STOK DURUMUNU GÜNCELLE
+  // 5. ADMIN: STOK DURUMUNU GÜNCELLE
   async updateStock(id: number, stockStatus: number) {
     try {
       const updatedProduct = await this.prisma.product.update({

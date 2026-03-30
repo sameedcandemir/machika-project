@@ -66,6 +66,10 @@ export class ProductsController {
       ...body,
       priceUSD: parseFloat(body.priceUSD),
       priceTRY: parseFloat(body.priceTRY || '0'), 
+      
+      // 🚀 YENİ: Mobilden gelen indirim yüzdesini Controller'da yakalıyoruz
+      discountPercentage: body.discountPercentage ? parseInt(body.discountPercentage, 10) : 0,
+
       colorsData: colorsDataToSave,
     };
 
@@ -83,9 +87,38 @@ export class ProductsController {
     return await this.productsService.deleteProduct(Number(id));
   }
 
+  // 🚀 GÜNCELLENDİ: Hem Stok Güncellemesini Hem de Ürün Düzenlemeyi (İndirim dahil) Yönetir
   @Patch(':id') 
-  async updateStockStatus(@Param('id') id: string, @Body() body: { stockStatus: number }) {
-    console.log(`📦 MUTA SİSTEMİ: Stok güncelleniyor -> ID: ${id}, Yeni Durum: ${body.stockStatus}`);
-    return await this.productsService.updateStock(Number(id), body.stockStatus);
+  @UseInterceptors(AnyFilesInterceptor()) 
+  async updateProduct(
+    @Param('id') id: string, 
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() body: any
+  ) {
+    // 1. Senaryo: Sadece Stok Güncellemesi Gelmişse (Eski yapıyı bozmamak için)
+    if (body.stockStatus !== undefined && Object.keys(body).length <= 2) {
+      console.log(`📦 MUTA SİSTEMİ: Sadece Stok güncelleniyor -> ID: ${id}, Yeni Durum: ${body.stockStatus}`);
+      return await this.productsService.updateStock(Number(id), Number(body.stockStatus));
+    }
+
+    // 2. Senaryo: Mobilden Kapsamlı Ürün Güncellemesi (İndirim, Fiyat, İsim vs.) Gelmişse
+    console.log(`📝 MUTA SİSTEMİ: Ürün detayları düzenleniyor -> ID: ${id}`);
+    
+    const updateData = {
+      ...body,
+      // Eğer fiyatlar geldiyse sayıya çevir
+      priceUSD: body.priceUSD ? parseFloat(body.priceUSD) : undefined,
+      priceTRY: body.priceTRY ? parseFloat(body.priceTRY) : undefined,
+      
+      // 🚀 YENİ: İndirim yüzdesi güncelleniyorsa yakala
+      discountPercentage: body.discountPercentage !== undefined ? parseInt(body.discountPercentage, 10) : undefined,
+    };
+
+    const updatedProduct = await this.productsService.updateProduct(Number(id), updateData);
+    
+    return {
+      message: 'Ürün başarıyla güncellendi.',
+      data: updatedProduct
+    };
   }
 }
