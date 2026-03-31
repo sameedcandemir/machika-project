@@ -9,4 +9,10 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  // 🚀 YENİ: Müşteri (Kullanıcı) listesini mobil uygulamaya gönderen kapı!
+  @Get('users')
+  async getUsers() {
+    return this.appService.getAllUsers();
+  }
 }
