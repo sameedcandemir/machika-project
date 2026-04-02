@@ -10,27 +10,27 @@ export class OrdersController {
   async createOrder(@Body() body: any) {
     return this.ordersService.createOrder(body);
   }
- 
+
   @Get()
   async getAllOrders() {
     return this.ordersService.getAllOrders();
   }
- 
+
   @Post(':orderCode/status')
   async updateOrderStatus(@Param('orderCode') orderCode: string, @Body('status') status: string) {
     return this.ordersService.updateOrderStatus(orderCode, status);
   }
- 
+
   @Delete(':orderId')
   async deleteOrder(@Param('orderId') orderId: string) {
     return this.ordersService.deleteOrder(Number(orderId));
   }
- 
+
   @Get('view/:orderCode')
   async viewOrder(@Param('orderCode') orderCode: string, @Res() res: Response) {
     try {
       const order = await this.ordersService.getOrderWithDetails(orderCode);
-      const BACKEND_URL = 'http://10.102.143.129:3000'; 
+      const BACKEND_URL = 'https://muta-api.up.railway.app'; 
 
       let itemsHtml = ''; 
       
@@ -38,13 +38,11 @@ export class OrdersController {
         
         let imgUrl = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'; 
         
-        // 👑 ÇÖZÜM BURADA: TypeScript'e bunun bir metin (string) veya null olabileceğini açıkça belirttik.
         let dbPath: string | null = null;
 
         if (item.product && item.product.colors) {
           const matchedColor = item.product.colors.find((c: any) => c.colorName === item.color);
           if (matchedColor && matchedColor.image1) {
-            // 👑 GARANTİ: Gelen veriyi zorla String'e çeviriyoruz ki TypeScript rahat etsin.
             dbPath = String(matchedColor.image1);
           }
         }
@@ -60,25 +58,33 @@ export class OrdersController {
             imgUrl = encodeURI(rawUrl); 
           }
         }
- 
+
+        // 🚀 GÜNCELLEME: Fotoğraf kutusuna onclick eventi eklendi
         itemsHtml += `
-          <div style="display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 15px 0;">
-            <div style="flex-shrink: 0; width: 80px; height: 110px; margin-right: 15px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #f9f9f9;">
-               <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Ürün Fotoğrafı" onerror="this.src='https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'" />
+          <div style="display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding: 20px 0;">
+            
+            <div class="product-image-box" onclick="openModal('${imgUrl}')" style="flex-shrink: 0; width: 140px; height: 190px; margin-right: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); background-color: #f9f9f9; border: 1px solid #eee; cursor: pointer; position: relative;">
+               <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" alt="Ürün Fotoğrafı" onerror="this.src='https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'" class="hover-zoom" />
+               <div style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 4px 6px; border-radius: 4px; font-weight: bold;">🔍 BÜYÜT</div>
             </div>
-            <div style="flex: 1;">
-              <h3 style="margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase;">${item.product.name_tr}</h3>
-              <p style="margin: 0 0 3px 0; color: #666; font-size: 13px;">🔖 Kod: <b>${item.product.productCode}</b></p>
-              <p style="margin: 0 0 3px 0; color: #666; font-size: 13px;">🎨 Renk: ${item.color} | 📏 Seri: ${item.size}</p>
-              <p style="margin: 0; color: #e11d48; font-size: 13px; font-weight: bold;">📦 ${item.quantity} Adet</p>
+
+            <div style="flex: 1; padding-top: 5px;">
+              <h3 style="margin: 0 0 8px 0; font-size: 18px; text-transform: uppercase; color: #111; line-height: 1.2;">${item.product.name_tr}</h3>
+              <p style="margin: 0 0 5px 0; color: #64748b; font-size: 14px;">🔖 Kod: <b style="color: #000;">${item.product.productCode}</b></p>
+              <p style="margin: 0 0 5px 0; color: #64748b; font-size: 14px;">🎨 Renk: <span style="color: #000; font-weight: 500;">${item.color}</span></p>
+              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">📏 Seri: <span style="color: #000; font-weight: 500;">${item.size}</span></p>
+              <div style="display: inline-block; background: #fff1f2; color: #e11d48; padding: 4px 10px; border-radius: 6px; font-size: 14px; font-weight: bold;">
+                📦 ${item.quantity} Adet
+              </div>
             </div>
-            <div style="text-align: right;">
-              <h4 style="margin: 0; font-size: 16px;">₺${item.unitPrice.toLocaleString('tr-TR')}</h4>
+            <div style="text-align: right; padding-top: 5px;">
+              <h4 style="margin: 0; font-size: 18px; color: #111; font-weight: 700;">₺${item.unitPrice.toLocaleString('tr-TR')}</h4>
+              <p style="margin: 3px 0 0 0; color: #94a3b8; font-size: 11px; font-weight: bold;">BİRİM FİYAT</p>
             </div>
           </div>
         `;
       });
- 
+
       const html = `
         <!DOCTYPE html>
         <html lang="tr">
@@ -88,31 +94,45 @@ export class OrdersController {
           <title>MUTA Sipariş - ${order.orderCode}</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f5; padding: 20px; margin: 0; }
-            .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-            .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 15px; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 28px; letter-spacing: 8px; font-weight: 300; }
-            .order-info { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; }
-            .order-info p { margin: 6px 0; font-size: 14px; color: #334155; }
-            .total-box { background: #111; color: #fff; text-align: right; padding: 20px; border-radius: 8px; margin-top: 25px; }
-            .total-box h2 { margin: 0; font-size: 22px; font-weight: 600; }
-            .total-box p { margin: 5px 0 0 0; font-size: 12px; opacity: 0.8; letter-spacing: 1px; }
+            .container { max-width: 650px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+            .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 20px; margin-bottom: 25px; }
+            .header h1 { margin: 0; font-size: 32px; letter-spacing: 12px; font-weight: 200; color: #000; }
+            .order-info { background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .order-info p { margin: 0; font-size: 14px; color: #334155; }
+            .total-box { background: #111; color: #fff; text-align: right; padding: 25px; border-radius: 12px; margin-top: 30px; }
+            .total-box h2 { margin: 0; font-size: 28px; font-weight: 700; color: #fff; }
+            .total-box p { margin: 0 0 5px 0; font-size: 11px; opacity: 0.7; letter-spacing: 2px; text-transform: uppercase; }
+            
+            /* 🚀 YENİ: Fotoğraf Büyütme (Modal) CSS Ayarları */
+            .hover-zoom:hover { transform: scale(1.05); }
+            .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+            .modal.show { opacity: 1; pointer-events: auto; }
+            .modal-content { max-width: 90%; max-height: 85vh; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); object-fit: contain; transform: scale(0.9); transition: transform 0.3s ease; }
+            .modal.show .modal-content { transform: scale(1); }
+            .close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: 100; cursor: pointer; user-select: none; }
+            .close:hover { color: #bbb; }
+
+            @media (max-width: 500px) {
+              .order-info { grid-template-columns: 1fr; }
+              .container { padding: 15px; }
+            }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
               <h1>MUTΛ</h1>
-              <p style="color: #666; margin-top: 5px; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">DİJİTAL SİPARİŞ FİŞİ</p>
+              <p style="color: #666; margin-top: 8px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: bold;">DİJİTAL SİPARİŞ FİŞİ</p>
             </div>
             
             <div class="order-info">
-              <p>🧾 <strong>Sipariş Kodu:</strong> ${order.orderCode}</p>
-              <p>📅 <strong>Tarih:</strong> ${new Date(order.createdAt).toLocaleString('tr-TR')}</p>
-              <p>📱 <strong>Müşteri No:</strong> ${order.user.phone}</p>
-              <p>⏳ <strong>Durum:</strong> <span style="color: #d97706; font-weight: bold;">${order.status}</span></p>
+              <p><strong>Sipariş Kodu:</strong> ${order.orderCode}</p>
+              <p><strong>Tarih:</strong> ${new Date(order.createdAt).toLocaleString('tr-TR')}</p>
+              <p><strong>Müşteri No:</strong> ${order.user.phone}</p>
+              <p><strong>Durum:</strong> <span style="color: #d97706; font-weight: bold;">${order.status}</span></p>
             </div>
 
-            <h3 style="border-bottom: 1px solid #eee; padding-bottom: 10px; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Sipariş Edilen Ürünler</h3>
+            <h3 style="border-bottom: 1px solid #eee; padding-bottom: 12px; color: #111; font-size: 13px; text-transform: uppercase; letter-spacing: 2px;">Sipariş Edilen Ürünler</h3>
             
             ${itemsHtml}
             
@@ -120,7 +140,28 @@ export class OrdersController {
               <p>GENEL TOPLAM</p>
               <h2>₺${order.totalPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}</h2>
             </div>
+            
+            <p style="text-align: center; color: #94a3b8; font-size: 11px; margin-top: 30px; letter-spacing: 1px;">Bu bir dijital sipariş fişidir. MUTA Collection.</p>
           </div>
+
+          <div id="imageModal" class="modal" onclick="closeModal()">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img class="modal-content" id="expandedImg">
+          </div>
+
+          <script>
+            function openModal(imgSrc) {
+              var modal = document.getElementById('imageModal');
+              var modalImg = document.getElementById('expandedImg');
+              modalImg.src = imgSrc;
+              modal.classList.add('show');
+            }
+
+            function closeModal() {
+              var modal = document.getElementById('imageModal');
+              modal.classList.remove('show');
+            }
+          </script>
         </body>
         </html>
       `;
