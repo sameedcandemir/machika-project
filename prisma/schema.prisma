@@ -31,14 +31,14 @@ model Product {
 }
 
 model ProductColor { 
-  id          Int      @id @default(autoincrement())
-  productId   Int
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade) 
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade) 
   
-  colorName   String   
-  colorHex    String?  
-  image1      String?  
-  image2      String?  
+  colorName String   
+  colorHex  String?  
+  image1    String?  
+  image2    String?  
 }
 
 model User {
@@ -49,28 +49,36 @@ model User {
   createdAt DateTime @default(now()) 
   orders    Order[]
 }
- 
+
 model Order {
-  id          Int         @id @default(autoincrement())
-  orderCode   String      @unique 
-  userId      Int
-  user        User        @relation(fields: [userId], references: [id])
-  totalPrice  Float       
-  currency    String      @default("TRY") 
-  status      String      @default("BEKLIYOR") 
-  createdAt   DateTime    @default(now()) 
-  items       OrderItem[]
+  id         Int         @id @default(autoincrement())
+  orderCode  String      @unique 
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  totalPrice Float       
+  currency   String      @default("TRY") 
+  status     String      @default("BEKLIYOR") 
+  createdAt  DateTime    @default(now()) 
+  items      OrderItem[]
 }
- 
+
 model OrderItem {
-  id          Int      @id @default(autoincrement())
-  orderId     Int
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   Int 
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade) 
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int 
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade) 
   
-  size        String   
-  color       String   
-  quantity    Int      
-  unitPrice   Float    
+  size      String   
+  color     String   
+  quantity  Int      
+  unitPrice Float    
+}
+
+// 🚀 YENİ: Kategori Modeli Eklendi
+model Category {
+  id        Int      @id @default(autoincrement())
+  title     String   @unique
+  keyword   String   @unique
+  createdAt DateTime @default(now())
 }

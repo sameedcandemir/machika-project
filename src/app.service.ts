@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 // PrismaService'in senin projendeki yeri farklıysa bu satırın altı kırmızı çizilebilir. 
-// Genelde 'prisma.service' dosyasından gelir.
+// Genelde 'prisma/prisma.service' dosyasından gelir.
 import { PrismaService } from './prisma/prisma.service';
 
 @Injectable()
@@ -12,11 +12,30 @@ export class AppService {
     return 'Hello World!';
   }
 
-  // 🚀 YENİ: Veritabanından tüm kullanıcıları (müşterileri) çeken görev!
+  // Veritabanından tüm kullanıcıları (müşterileri) çeken görev!
   async getAllUsers() {
     return this.prisma.user.findMany({
       orderBy: {
         id: 'desc', // En son kayıt olan en üstte gelsin
+      },
+    });
+  }
+
+  // 🚀 YENİ: Veritabanından tüm kategorileri çeken görev!
+  async getCategories() {
+    return this.prisma.category.findMany({
+      orderBy: { 
+        createdAt: 'asc' // Eklenme sırasına göre gelsin
+      },
+    });
+  }
+
+  // 🚀 YENİ: Veritabanına yeni kategori ekleyen görev!
+  async addCategory(data: { title: string; keyword: string }) {
+    return this.prisma.category.create({
+      data: {
+        title: data.title,
+        keyword: data.keyword,
       },
     });
   }
