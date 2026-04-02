@@ -55,7 +55,7 @@ model Order {
   orderCode  String      @unique 
   userId     Int
   user       User        @relation(fields: [userId], references: [id])
-  totalPrice Float       
+  totalPrice Float        
   currency   String      @default("TRY") 
   status     String      @default("BEKLIYOR") 
   createdAt  DateTime    @default(now()) 
@@ -75,9 +75,9 @@ model OrderItem {
   unitPrice Float    
 }
 
-// 🚀 YENİ: Kategori Modeli Eklendi
+// 🚀 YENİ: Kategori Modeli Eklendi (ID String UUID olarak güncellendi!)
 model Category {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   title     String   @unique
   keyword   String   @unique
   createdAt DateTime @default(now())
