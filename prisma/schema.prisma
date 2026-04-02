@@ -39,6 +39,10 @@ model ProductColor {
   colorHex  String?  
   image1    String?  
   image2    String?  
+  // 🚀 YENİ: 3, 4 ve 5. Fotoğraf Sütunları Eklendi
+  image3    String?  
+  image4    String?  
+  image5    String?  
 }
 
 model User {
@@ -75,7 +79,7 @@ model OrderItem {
   unitPrice Float    
 }
 
-// 🚀 YENİ: Kategori Modeli Eklendi (ID String UUID olarak güncellendi!)
+// Kategori Modeli
 model Category {
   id        String   @id @default(uuid())
   title     String   @unique

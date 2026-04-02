@@ -38,27 +38,27 @@ export class ProductsController {
 
     for (let i = 0; i < parsedColors.length; i++) {
       const colorInfo = parsedColors[i];
-      let image1Url = null;
-      let image2Url = null;
-
-      const file1 = files.find(f => f.fieldname === `image_${i}_1`);
-      const file2 = files.find(f => f.fieldname === `image_${i}_2`);
-
-      if (file1) {
-        const upload1 = await this.cloudinary.uploadImage(file1);
-        image1Url = upload1.secure_url;
-      }
       
-      if (file2) {
-        const upload2 = await this.cloudinary.uploadImage(file2);
-        image2Url = upload2.secure_url;
+      // 🚀 YENİ: 5 Fotoğrafı tutacak bir dizi oluşturuyoruz
+      const imageUrls: (string | null)[] = [null, null, null, null, null];
+
+      // 1'den 5'e kadar olan tüm fotoğrafları kontrol et ve Cloudinary'e yükle
+      for (let j = 1; j <= 5; j++) {
+        const file = files.find(f => f.fieldname === `image_${i}_${j}`);
+        if (file) {
+          const upload = await this.cloudinary.uploadImage(file);
+          imageUrls[j - 1] = upload.secure_url;
+        }
       }
 
       colorsDataToSave.push({
         colorName: colorInfo.colorName,
         colorHex: colorInfo.colorHex || null,
-        image1: image1Url,
-        image2: image2Url
+        image1: imageUrls[0],
+        image2: imageUrls[1],
+        image3: imageUrls[2],
+        image4: imageUrls[3],
+        image5: imageUrls[4]
       });
     }
 
@@ -67,7 +67,6 @@ export class ProductsController {
       priceUSD: parseFloat(body.priceUSD),
       priceTRY: parseFloat(body.priceTRY || '0'), 
       
-      // 🚀 YENİ: Mobilden gelen indirim yüzdesini Controller'da yakalıyoruz
       discountPercentage: body.discountPercentage ? parseInt(body.discountPercentage, 10) : 0,
 
       colorsData: colorsDataToSave,
@@ -87,7 +86,6 @@ export class ProductsController {
     return await this.productsService.deleteProduct(Number(id));
   }
 
-  // 🚀 GÜNCELLENDİ: Hem Stok Güncellemesini Hem de Ürün Düzenlemeyi (İndirim dahil) Yönetir
   @Patch(':id') 
   @UseInterceptors(AnyFilesInterceptor()) 
   async updateProduct(
@@ -95,22 +93,19 @@ export class ProductsController {
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Body() body: any
   ) {
-    // 1. Senaryo: Sadece Stok Güncellemesi Gelmişse (Eski yapıyı bozmamak için)
+    // 1. Senaryo: Sadece Stok Güncellemesi Gelmişse
     if (body.stockStatus !== undefined && Object.keys(body).length <= 2) {
       console.log(`📦 MUTA SİSTEMİ: Sadece Stok güncelleniyor -> ID: ${id}, Yeni Durum: ${body.stockStatus}`);
       return await this.productsService.updateStock(Number(id), Number(body.stockStatus));
     }
 
-    // 2. Senaryo: Mobilden Kapsamlı Ürün Güncellemesi (İndirim, Fiyat, İsim vs.) Gelmişse
+    // 2. Senaryo: Mobilden Kapsamlı Ürün Güncellemesi Gelmişse
     console.log(`📝 MUTA SİSTEMİ: Ürün detayları düzenleniyor -> ID: ${id}`);
     
     const updateData = {
       ...body,
-      // Eğer fiyatlar geldiyse sayıya çevir
       priceUSD: body.priceUSD ? parseFloat(body.priceUSD) : undefined,
       priceTRY: body.priceTRY ? parseFloat(body.priceTRY) : undefined,
-      
-      // 🚀 YENİ: İndirim yüzdesi güncelleniyorsa yakala
       discountPercentage: body.discountPercentage !== undefined ? parseInt(body.discountPercentage, 10) : undefined,
     };
 
