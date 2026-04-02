@@ -30,7 +30,7 @@ export class OrdersController {
   async viewOrder(@Param('orderCode') orderCode: string, @Res() res: Response) {
     try {
       const order = await this.ordersService.getOrderWithDetails(orderCode);
-      const BACKEND_URL = 'https://muta-api.up.railway.app'; 
+      const BACKEND_URL = 'https://muta-api.up.railway.app'; // Railway linkinle güncellendi
 
       let itemsHtml = ''; 
       
@@ -59,15 +59,12 @@ export class OrdersController {
           }
         }
 
-        // 🚀 GÜNCELLEME: Fotoğraf kutusuna onclick eventi eklendi
+        // 🚀 GÜNCELLEME: Görsel alanı 80px'den 140px'e büyütüldü ve tasarım keskinleştirildi.
         itemsHtml += `
           <div style="display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding: 20px 0;">
-            
-            <div class="product-image-box" onclick="openModal('${imgUrl}')" style="flex-shrink: 0; width: 140px; height: 190px; margin-right: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); background-color: #f9f9f9; border: 1px solid #eee; cursor: pointer; position: relative;">
-               <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" alt="Ürün Fotoğrafı" onerror="this.src='https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'" class="hover-zoom" />
-               <div style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 10px; padding: 4px 6px; border-radius: 4px; font-weight: bold;">🔍 BÜYÜT</div>
+            <div style="flex-shrink: 0; width: 140px; height: 190px; margin-right: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); background-color: #f9f9f9; border: 1px solid #eee;">
+               <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Ürün Fotoğrafı" onerror="this.src='https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=500'" />
             </div>
-
             <div style="flex: 1; padding-top: 5px;">
               <h3 style="margin: 0 0 8px 0; font-size: 18px; text-transform: uppercase; color: #111; line-height: 1.2;">${item.product.name_tr}</h3>
               <p style="margin: 0 0 5px 0; color: #64748b; font-size: 14px;">🔖 Kod: <b style="color: #000;">${item.product.productCode}</b></p>
@@ -102,16 +99,6 @@ export class OrdersController {
             .total-box { background: #111; color: #fff; text-align: right; padding: 25px; border-radius: 12px; margin-top: 30px; }
             .total-box h2 { margin: 0; font-size: 28px; font-weight: 700; color: #fff; }
             .total-box p { margin: 0 0 5px 0; font-size: 11px; opacity: 0.7; letter-spacing: 2px; text-transform: uppercase; }
-            
-            /* 🚀 YENİ: Fotoğraf Büyütme (Modal) CSS Ayarları */
-            .hover-zoom:hover { transform: scale(1.05); }
-            .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-            .modal.show { opacity: 1; pointer-events: auto; }
-            .modal-content { max-width: 90%; max-height: 85vh; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); object-fit: contain; transform: scale(0.9); transition: transform 0.3s ease; }
-            .modal.show .modal-content { transform: scale(1); }
-            .close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: 100; cursor: pointer; user-select: none; }
-            .close:hover { color: #bbb; }
-
             @media (max-width: 500px) {
               .order-info { grid-template-columns: 1fr; }
               .container { padding: 15px; }
@@ -143,25 +130,6 @@ export class OrdersController {
             
             <p style="text-align: center; color: #94a3b8; font-size: 11px; margin-top: 30px; letter-spacing: 1px;">Bu bir dijital sipariş fişidir. MUTA Collection.</p>
           </div>
-
-          <div id="imageModal" class="modal" onclick="closeModal()">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <img class="modal-content" id="expandedImg">
-          </div>
-
-          <script>
-            function openModal(imgSrc) {
-              var modal = document.getElementById('imageModal');
-              var modalImg = document.getElementById('expandedImg');
-              modalImg.src = imgSrc;
-              modal.classList.add('show');
-            }
-
-            function closeModal() {
-              var modal = document.getElementById('imageModal');
-              modal.classList.remove('show');
-            }
-          </script>
         </body>
         </html>
       `;
