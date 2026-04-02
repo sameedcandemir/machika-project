@@ -3,10 +3,9 @@ import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
-  private prisma = new PrismaClient(); // Veritabanı bağlantısı
+  private prisma = new PrismaClient(); 
 
   async createOrder(data: any) {
-    // Rastgele havalı bir sipariş kodu üretiyoruz (Örn: SIP-8492)
     const orderCode = `SIP-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const order = await this.prisma.order.create({
@@ -38,7 +37,7 @@ export class OrdersService {
           include: {
             product: {
               include: {
-                colors: true // 🎨 YENİ: Faturada doğru resmin çıkması için renkleri ve resimleri de çekiyoruz!
+                colors: true 
               }
             }, 
           },
@@ -50,7 +49,6 @@ export class OrdersService {
     return order;
   }
 
-  // 🚀 YENİ EKLENDİ: Belirli bir müşterinin tüm geçmiş siparişlerini getir
   async getUserOrders(userId: number) {
     return this.prisma.order.findMany({
       where: { userId: userId },
@@ -59,7 +57,7 @@ export class OrdersService {
         items: {
           include: { 
             product: {
-              include: { colors: true } // 🎨 YENİ: Mobildeki sipariş geçmişinde resimlerin çıkması için!
+              include: { colors: true } 
             } 
           } 
         }
@@ -67,15 +65,25 @@ export class OrdersService {
     });
   }
 
-  // 👑 YENİ EKLENDİ: ADMİN İÇİN TÜM SİPARİŞLERİ GETİRİR
+  // 👑 🚀 GÜNCELLENDİ: Admin sipariş listesinde artık ürün fotoğrafları ve detayları da çekiliyor!
   async getAllOrders() {
     return this.prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { user: true } // Müşterinin telefon numarasını görmek için
+      include: { 
+        user: true, // Müşteri numarasını getir
+        items: {    // 🚀 Siparişin içindeki ürünleri getir
+          include: {
+            product: { // O ürünlerin ana bilgilerini getir
+              include: {
+                colors: true // Ve tabii ki resimlerin olduğu renk bilgisini getir
+              }
+            }
+          }
+        }
+      } 
     });
   }
 
-  // 👑 YENİ EKLENDİ: SİPARİŞ DURUMUNU GÜNCELLE (Örn: BEKLIYOR -> ONAYLANDI)
   async updateOrderStatus(orderCode: string, status: string) {
     return this.prisma.order.update({
       where: { orderCode },
@@ -83,15 +91,12 @@ export class OrdersService {
     });
   }
 
-  // 🗑️ 👑 YENİ EKLENDİ: ADMİN İÇİN SİPARİŞİ KALICI OLARAK SİL
   async deleteOrder(orderId: number) {
     try {
-      // 1. Önce bu siparişe ait ürünleri (sepet detaylarını) siliyoruz
       await this.prisma.orderItem.deleteMany({
         where: { orderId: orderId },
       });
 
-      // 2. Alt ürünler temizlendikten sonra ana siparişi siliyoruz
       const deletedOrder = await this.prisma.order.delete({
         where: { id: orderId },
       });
