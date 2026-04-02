@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-// PrismaService'in senin projendeki yeri farklıysa bu satırın altı kırmızı çizilebilir. 
-// Genelde 'prisma/prisma.service' dosyasından gelir.
+// PrismaService'in yolu klasör yapına göre './prisma/prisma.service' olarak güncellendi.
 import { PrismaService } from './prisma/prisma.service';
 
 @Injectable()
